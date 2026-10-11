@@ -1,0 +1,27 @@
+name: Build GBA ROM
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile sunstone_saga.gba
+        run: |
+          : "${DEVKITPRO:=/opt/devkitpro}"
+          : "${DEVKITARM:=$DEVKITPRO/devkitARM}"
+          export PATH="$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH"
+          arm-none-eabi-gcc -mthumb -mthumb-interwork -mcpu=arm7tdmi -mtune=arm7tdmi -O2 -Wall -specs=gba.specs main.c -o sunstone_saga.elf
+          arm-none-eabi-objcopy -O binary sunstone_saga.elf sunstone_saga.gba
+          gbafix sunstone_saga.gba -tSUNSTONE -cSUNS -m01
+          ls -l sunstone_saga.gba
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sunstone-saga-gba
+          path: sunstone_saga.gba
